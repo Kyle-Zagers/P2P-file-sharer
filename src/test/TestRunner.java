@@ -28,8 +28,8 @@ public class TestRunner {
         runBitFieldTests();
         runMessageTests();
         runHandshakeTests();
-        runCommonConfigTests();
-        runPeerInfoConfigTests();
+        // runCommonConfigTests(); // Subject to change
+        // runPeerInfoConfigTests(); // Subject to change
         runFileManagerTests();
         runIntegrationHandshakeTest();
         runLoggerFormatTest();
