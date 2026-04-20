@@ -19,7 +19,7 @@ public class FileManager {
         this.fileSize = fileSize;
         this.pieceSize = pieceSize;
         this.numberOfPieces = numberOfPieces;
-        this.peerDirectory = "peer_" + peerId;
+        this.peerDirectory = String.valueOf(peerId);
         new File(peerDirectory).mkdirs();
     }
 
@@ -42,6 +42,14 @@ public class FileManager {
     }
 
     public synchronized void assembleFile() throws IOException {
+
+        // File is assembled by writing pieces in place, so we just need to verify the final size
+        // TODO: Not sure why we need this method.
+
+        File file = new File(peerDirectory + File.separator + fileName);
+        if (file.length() != fileSize) {
+            throw new IOException("Assembled file size does not match expected size");
+        }
     }
 
     public int getPieceSizeForIndex(int pieceIndex) {

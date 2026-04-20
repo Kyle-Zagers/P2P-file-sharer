@@ -53,6 +53,12 @@ public class ConnectionHandler implements Runnable {
             if (!peerManager.isAllPeersFinished()) {
                 System.err.println("Connection error with peer " + remotePeerId + ": " + e.getMessage());
             }
+        } finally {
+            if (connection != null) {
+                if (remotePeerId > 0) {
+                    peerManager.releaseRequestsForPeer(remotePeerId);
+                }
+            }
         }
     }
 
@@ -98,6 +104,7 @@ public class ConnectionHandler implements Runnable {
         switch (msg.getType()) {
             case CHOKE:
                 connection.setRemoteChoked(true);
+                peerManager.releaseRequestsForPeer(remotePeerId);
                 logger.logChoked(remotePeerId);
                 break;
 
@@ -157,7 +164,7 @@ public class ConnectionHandler implements Runnable {
             case PIECE: {
                 int pieceIndex = msg.parsePieceIndex();
                 byte[] data = msg.parsePieceData();
-                peerManager.removeRequestedPiece(pieceIndex);
+                peerManager.completeRequestedPiece(pieceIndex);
                 try {
                     fileManager.writePiece(pieceIndex, data);
                 } catch (IOException e) {
@@ -191,6 +198,7 @@ public class ConnectionHandler implements Runnable {
 
     private void sendRequestIfPossible(PeerConnection connection) throws IOException {
         if (connection.isRemoteChoked()) return;
+        peerManager.releaseExpiredRequests(15000);
         BitField localBitField = peerManager.getLocalBitField();
         BitField neighborBitField = peerManager.getNeighborBitFields().get(remotePeerId);
         if (neighborBitField == null) return;
@@ -205,7 +213,7 @@ public class ConnectionHandler implements Runnable {
 
         if (!candidates.isEmpty()) {
             int chosen = candidates.get(new Random().nextInt(candidates.size()));
-            if (peerManager.addRequestedPiece(chosen)) {
+            if (peerManager.tryAssignRequestedPiece(chosen, remotePeerId)) {
                 connection.sendMessage(Message.buildRequest(chosen));
             }
         } else {

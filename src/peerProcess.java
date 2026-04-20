@@ -69,6 +69,10 @@ public class peerProcess {
                 peerManager.checkAllFinished();
             }
 
+            if (listener != null) {
+                listener.stop();
+            }
+
             chokingManager.stop();
             logger.close();
 

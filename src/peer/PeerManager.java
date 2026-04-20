@@ -7,6 +7,7 @@ import logging.PeerLogger;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class PeerManager {
@@ -16,6 +17,8 @@ public class PeerManager {
     private final Map<Integer, PeerConnection> connections;
     private final Map<Integer, BitField> neighborBitFields;
     private final Set<Integer> requestedPieces;
+    private final Map<Integer, Integer> pieceToPeer;
+    private final Map<Integer, Long> pieceRequestTime;
     private volatile boolean allPeersFinished;
     private FileManager fileManager;
     private PeerLogger logger;
@@ -27,6 +30,8 @@ public class PeerManager {
         this.connections = new ConcurrentHashMap<>();
         this.neighborBitFields = new ConcurrentHashMap<>();
         this.requestedPieces = ConcurrentHashMap.newKeySet();
+        this.pieceToPeer = new ConcurrentHashMap<>();
+        this.pieceRequestTime = new ConcurrentHashMap<>();
         this.allPeersFinished = false;
     }
 
@@ -77,15 +82,59 @@ public class PeerManager {
     }
 
     public boolean addRequestedPiece(int pieceIndex) {
-        return requestedPieces.add(pieceIndex);
+        return tryAssignRequestedPiece(pieceIndex, -1);
     }
 
     public void removeRequestedPiece(int pieceIndex) {
-        requestedPieces.remove(pieceIndex);
+        completeRequestedPiece(pieceIndex);
     }
 
     public boolean isRequested(int pieceIndex) {
         return requestedPieces.contains(pieceIndex);
+    }
+
+    public synchronized boolean tryAssignRequestedPiece(int pieceIndex, int remotePeerId) {
+        if (localBitField.hasPiece(pieceIndex)) {
+            return false;
+        }
+        if (requestedPieces.contains(pieceIndex)) {
+            return false;
+        }
+        requestedPieces.add(pieceIndex);
+        pieceToPeer.put(pieceIndex, remotePeerId);
+        pieceRequestTime.put(pieceIndex, System.currentTimeMillis());
+        return true;
+    }
+
+    public synchronized void completeRequestedPiece(int pieceIndex) {
+        requestedPieces.remove(pieceIndex);
+        pieceToPeer.remove(pieceIndex);
+        pieceRequestTime.remove(pieceIndex);
+    }
+
+    public synchronized void releaseRequestsForPeer(int remotePeerId) {
+        Set<Integer> toRelease = new HashSet<>();
+        for (Map.Entry<Integer, Integer> entry : pieceToPeer.entrySet()) {
+            if (entry.getValue() == remotePeerId) {
+                toRelease.add(entry.getKey());
+            }
+        }
+        for (int pieceIndex : toRelease) {
+            completeRequestedPiece(pieceIndex);
+        }
+    }
+
+    public synchronized void releaseExpiredRequests(long timeoutMs) {
+        long now = System.currentTimeMillis();
+        Set<Integer> toRelease = new HashSet<>();
+        for (Map.Entry<Integer, Long> entry : pieceRequestTime.entrySet()) {
+            if (now - entry.getValue() > timeoutMs) {
+                toRelease.add(entry.getKey());
+            }
+        }
+        for (int pieceIndex : toRelease) {
+            completeRequestedPiece(pieceIndex);
+        }
     }
 
     public int getLocalPeerId() {
