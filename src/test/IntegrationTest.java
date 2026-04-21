@@ -35,10 +35,10 @@ public class IntegrationTest {
 
         System.out.println("All peers finished. Verifying file integrity...");
 
-        File seedFile = new File("1001" + File.separator + CommonConfig.getInstance().getFileName());
+        File seedFile = new File("peer_1001" + File.separator + CommonConfig.getInstance().getFileName());
 
         for (int i = 0; i < numProcesses; i++) {
-            File file = new File((1001 + i) + File.separator + CommonConfig.getInstance().getFileName());
+            File file = new File("peer_" + (1001 + i) + File.separator + CommonConfig.getInstance().getFileName());
             verifyFiles(seedFile, file);
         }
 

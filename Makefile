@@ -22,13 +22,13 @@ integration-test: all
 	@echo "Running tests..."
 	java -cp build test.IntegrationTest
 	@echo "Removing peer folders."
-	rm -rf 1002 1003 1004 1005 1006
-	rm log_peer_1001.log log_peer_1002.log log_peer_1003.log log_peer_1004.log log_peer_1005.log log_peer_1006.log
+	rm -rf peer_1002 peer_1003 peer_1004 peer_1005 peer_1006
+	rm -f log_peer_1001.log log_peer_1002.log log_peer_1003.log log_peer_1004.log log_peer_1005.log log_peer_1006.log
 	$(MAKE) restore-PeerInfo
 
 unit-test: all
 	java -cp build test.TestRunner
-	rm -rf 99997 99998 99999
+	rm -rf peer_99997 peer_99998 peer_99999
 
 save-PeerInfo:
 	@echo "Saving current PeerInfo.cfg to PeerInfo.cfg.bak"
