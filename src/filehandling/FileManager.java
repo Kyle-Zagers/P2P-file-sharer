@@ -19,7 +19,7 @@ public class FileManager {
         this.fileSize = fileSize;
         this.pieceSize = pieceSize;
         this.numberOfPieces = numberOfPieces;
-        this.peerDirectory = String.valueOf(peerId);
+        this.peerDirectory = "peer_" + peerId;
         new File(peerDirectory).mkdirs();
     }
 

@@ -14,7 +14,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -81,10 +80,11 @@ public class ChokingManager {
         if (localBitField.isComplete()) {
             Collections.shuffle(interested);
         } else {
+            // Shuffle first so ties are broken randomly (stable sort preserves shuffle order)
+            Collections.shuffle(interested);
             interested.sort((a, b) -> {
                 long diff = b.getValue().getBytesDownloaded() - a.getValue().getBytesDownloaded();
-                if (diff != 0) return diff > 0 ? 1 : -1;
-                return new Random().nextInt(3) - 1;
+                return diff > 0 ? 1 : (diff < 0 ? -1 : 0);
             });
             for (Map.Entry<Integer, PeerConnection> entry : interested) {
                 entry.getValue().resetBytesDownloaded();

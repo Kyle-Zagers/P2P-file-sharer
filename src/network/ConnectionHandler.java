@@ -85,6 +85,9 @@ public class ConnectionHandler implements Runnable {
                 connection.setInterested(false);
             }
         } else {
+            // Remote peer skipped BITFIELD (has no pieces) — we have nothing interesting from them
+            connection.sendMessage(new Message(MessageType.NOT_INTERESTED));
+            connection.setInterested(false);
             handleSingleMessage(connection, first);
         }
     }
