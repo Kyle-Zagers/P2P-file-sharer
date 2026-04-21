@@ -28,6 +28,7 @@ integration-test: all
 
 unit-test: all
 	java -cp build test.TestRunner
+	rm -rf 99997 99998 99999
 
 save-PeerInfo:
 	@echo "Saving current PeerInfo.cfg to PeerInfo.cfg.bak"
